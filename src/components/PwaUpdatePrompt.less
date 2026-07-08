@@ -1,0 +1,26 @@
+@import '../styles/mixins.less';
+
+.pwa-update-prompt {
+  .MuiAlert-root {
+    .sketch-border();
+    .flat-shadow();
+    font-family: 'Nunito', sans-serif;
+    font-weight: 600;
+    align-items: center;
+  }
+
+  .MuiAlert-filledInfo {
+    background: @dark;
+    color: @paper;
+  }
+
+  .MuiAlert-filledSuccess {
+    background: @accent-light;
+    color: @dark;
+  }
+
+  .MuiButton-root {
+    font-family: 'Caveat', cursive;
+    font-size: 1.05rem;
+  }
+}

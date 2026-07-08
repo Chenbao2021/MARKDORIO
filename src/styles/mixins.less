@@ -1,0 +1,35 @@
+@dark: #2d2d2d;
+@accent: #ca8a04;
+@accent-light: #fef9c3;
+@bg: #faf9f7;
+@paper: #fffef9;
+@text-secondary: #6b7280;
+@muted: #9ca3af;
+@border: #2d2d2d;
+@dashed-border: #d1d5db;
+@md: ~"(min-width: 900px)";
+@sm: ~"(min-width: 600px)";
+
+.sketch-border() {
+  border: 2px solid @border;
+  border-radius: 4px 12px 8px 4px;
+}
+
+.sketch-border-alt() {
+  border: 2px solid @border;
+  border-radius: 8px 4px 12px 4px;
+}
+
+.flat-shadow() {
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.12);
+}
+
+.hover-lift() {
+  transition: all 0.15s ease;
+  @media (hover: hover) {
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.15);
+    }
+  }
+}

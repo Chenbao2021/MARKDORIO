@@ -1,0 +1,51 @@
+@import '../styles/mixins.less';
+
+.filter-notes-dialog {
+  .sketch-border();
+  .flat-shadow();
+  background: @paper;
+}
+
+.filter-notes-dialog-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.filter-notes-dialog-title {
+  font-family: 'Caveat', cursive;
+  font-size: 1.6rem;
+  color: @dark;
+}
+
+.filter-notes-dialog-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-notes-dialog-label {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: @text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.filter-notes-dialog-empty {
+  color: @muted;
+  font-size: 0.85rem;
+}
+
+.filter-notes-dialog-date-toggle {
+  flex-wrap: wrap;
+}
+
+.filter-notes-dialog-actions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}

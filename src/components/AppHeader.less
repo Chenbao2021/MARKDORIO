@@ -1,0 +1,27 @@
+@import '../styles/mixins.less';
+
+.app-header {
+  border-bottom: 2px solid @border;
+  background: @bg;
+  flex-shrink: 0;
+}
+
+.app-header-toolbar {
+  min-height: 52px !important;
+  gap: 12px;
+}
+
+.app-header-menu-btn {
+  display: none;
+
+  @media (max-width: 899px) {
+    display: inline-flex;
+  }
+}
+
+.app-header-title {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  color: @dark;
+  font-size: 1.8rem;
+}

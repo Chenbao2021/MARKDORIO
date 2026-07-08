@@ -1,0 +1,32 @@
+@import '../styles/mixins.less';
+
+.delete-note-dialog {
+  .sketch-border();
+  .flat-shadow();
+  background: @paper;
+}
+
+.delete-note-dialog-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delete-note-dialog-title {
+  font-family: 'Caveat', cursive;
+  font-size: 1.6rem;
+  color: @dark;
+}
+
+.delete-note-dialog-subtitle {
+  color: @text-secondary;
+  font-size: 0.9rem;
+}
+
+.delete-note-dialog-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
