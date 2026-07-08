@@ -51,7 +51,7 @@ export default function SettingsMenu({
 
   return (
     <>
-      <IconButton className="note-editor-settings-btn" aria-label="Réglages" onClick={handleOpen}>
+      <IconButton className="auth-controls-settings-btn" aria-label="Réglages" onClick={handleOpen}>
         <SettingsDoodle />
       </IconButton>
       <Menu anchorEl={anchor} open={!!anchor} onClose={handleClose}>

@@ -5,6 +5,10 @@ import './AppHeader.less'
 
 interface AppHeaderProps {
   onToggleSidebar: () => void
+  fontValue: string | null
+  onFontChange: (fontId: string | null) => void
+  autoSave: boolean
+  onAutoSaveChange: (enabled: boolean) => void
 }
 
 const MenuDoodle = (): JSX.Element => (
@@ -15,7 +19,13 @@ const MenuDoodle = (): JSX.Element => (
   </svg>
 )
 
-export default function AppHeader({ onToggleSidebar }: AppHeaderProps): JSX.Element {
+export default function AppHeader({
+  onToggleSidebar,
+  fontValue,
+  onFontChange,
+  autoSave,
+  onAutoSaveChange,
+}: AppHeaderProps): JSX.Element {
   return (
     <AppBar position="static" color="transparent" elevation={0} className="app-header">
       <Toolbar className="app-header-toolbar">
@@ -29,7 +39,12 @@ export default function AppHeader({ onToggleSidebar }: AppHeaderProps): JSX.Elem
         <Typography variant="h6" className="app-header-title">
           Markdorio
         </Typography>
-        <AuthControls />
+        <AuthControls
+          fontValue={fontValue}
+          onFontChange={onFontChange}
+          autoSave={autoSave}
+          onAutoSaveChange={onAutoSaveChange}
+        />
       </Toolbar>
     </AppBar>
   )

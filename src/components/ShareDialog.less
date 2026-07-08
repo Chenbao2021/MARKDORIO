@@ -1,0 +1,54 @@
+@import '../styles/mixins.less';
+
+.share-dialog {
+  .sketch-border();
+  .flat-shadow();
+  background: @paper;
+}
+
+.share-dialog-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.share-dialog-title {
+  font-family: 'Caveat', cursive;
+  font-size: 1.6rem;
+  color: @dark;
+}
+
+.share-dialog-hint {
+  color: @text-secondary;
+  font-size: 0.85rem;
+}
+
+.share-dialog-toggle-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.share-dialog-toggle-label {
+  font-weight: 600;
+  color: @dark;
+}
+
+.share-dialog-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.share-dialog-error {
+  color: #b91c1c;
+  font-size: 0.85rem;
+}
+
+.share-dialog-actions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+}

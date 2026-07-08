@@ -1,0 +1,72 @@
+@import '../styles/mixins.less';
+
+.shared-note-view {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  background: @bg;
+}
+
+.shared-note-view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 2px solid @border;
+}
+
+.shared-note-view-brand {
+  font-family: 'Caveat', cursive;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: @dark;
+  text-decoration: none;
+}
+
+.shared-note-view-badge {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+}
+
+.shared-note-view-status {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shared-note-view-status-text {
+  color: @text-secondary;
+  font-family: 'Nunito', sans-serif;
+}
+
+.shared-note-view-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  max-width: 820px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.shared-note-view-title {
+  font-family: 'Caveat', cursive;
+  color: @dark;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.shared-note-view-content .markdown-preview {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  .sketch-border();
+  .flat-shadow();
+  background: @paper;
+  padding: 16px 18px;
+}

@@ -26,7 +26,7 @@ interface NotesContextValue {
   allLabels: string[]
   selectNote: (id: string | null) => void
   createNote: () => string
-  updateNote: (id: string, patch: Partial<Pick<Note, 'title' | 'content' | 'labels' | 'fontFamily'>>) => void
+  updateNote: (id: string, patch: Partial<Pick<Note, 'title' | 'content' | 'labels' | 'fontFamily' | 'isPublic'>>) => void
   deleteNote: (id: string) => void
   replaceAllNotes: (next: Note[]) => void
   clearDeletedNoteIds: (ids: string[]) => void
@@ -80,6 +80,7 @@ export function NotesProvider({ children }: { children: ReactNode }): JSX.Elemen
       updatedAt: now,
       labels: [],
       fontFamily: null,
+      isPublic: false,
     }
     setNotes((prev) => {
       const next = [note, ...prev]
@@ -91,7 +92,7 @@ export function NotesProvider({ children }: { children: ReactNode }): JSX.Elemen
   }, [flushSave, setSelectedNoteId])
 
   const updateNote = useCallback(
-    (id: string, patch: Partial<Pick<Note, 'title' | 'content' | 'labels' | 'fontFamily'>>) => {
+    (id: string, patch: Partial<Pick<Note, 'title' | 'content' | 'labels' | 'fontFamily' | 'isPublic'>>) => {
       setNotes((prev) => {
         const next = prev.map((n) => (n.id === id ? { ...n, ...patch, updatedAt: Date.now() } : n))
         scheduleSave(next)

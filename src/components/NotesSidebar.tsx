@@ -1,7 +1,9 @@
-import { Box, Button, Chip, IconButton, Typography } from '@mui/material'
+import { Box, Button, Chip, CircularProgress, IconButton, Typography } from '@mui/material'
 import { useMemo, useState, type JSX } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { Note } from '../data/note'
 import { useNotes } from '../context/NotesContext'
+import { usePublicSharedNotes, type PublicSharedNote } from '../hooks/usePublicSharedNotes'
 import FilterNotesDialog, { type DateFilter } from './FilterNotesDialog'
 import './NotesSidebar.less'
 
@@ -34,6 +36,26 @@ const SearchDoodle = (): JSX.Element => (
   <svg width="17" height="17" viewBox="0 0 18 18" fill="none" aria-hidden="true">
     <circle cx="7.5" cy="7.5" r="5" stroke="#2d2d2d" strokeWidth="1.6" />
     <path d="M11.5 11.5 L16 16" stroke="#2d2d2d" strokeWidth="1.6" strokeLinecap="round" />
+  </svg>
+)
+
+const ChevronDoodle = ({ isOpen }: { isOpen: boolean }): JSX.Element => (
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 12 12"
+    fill="none"
+    aria-hidden="true"
+    className={`notes-sidebar-chevron${isOpen ? ' is-open' : ''}`}
+  >
+    <path d="M3 4.5 L6 7.5 L9 4.5" stroke="#2d2d2d" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+const GlobeDoodle = (): JSX.Element => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <circle cx="8" cy="8" r="6" stroke="#6b7280" strokeWidth="1.4" />
+    <path d="M2 8 H14 M8 2 C10 4.5 10 11.5 8 14 C6 11.5 6 4.5 8 2" stroke="#6b7280" strokeWidth="1.2" fill="none" />
   </svg>
 )
 
@@ -92,11 +114,30 @@ function NoteListItem({ note, isActive, onSelect, onDelete }: NoteListItemProps)
   )
 }
 
+interface PublicNoteListItemProps {
+  note: PublicSharedNote
+  onSelect: () => void
+}
+
+function PublicNoteListItem({ note, onSelect }: PublicNoteListItemProps): JSX.Element {
+  return (
+    <Box className="notes-sidebar-item notes-sidebar-item--public" onClick={onSelect}>
+      <Box className="notes-sidebar-item-main">
+        <Typography className="notes-sidebar-item-title">{note.title || 'Sans titre'}</Typography>
+        <Typography className="notes-sidebar-item-time">{formatRelativeTime(note.updatedAt)}</Typography>
+      </Box>
+    </Box>
+  )
+}
+
 export default function NotesSidebar({ onRequestDelete, onNoteSelected }: NotesSidebarProps): JSX.Element {
   const { notes, selectedNoteId, selectNote, createNote, allLabels } = useNotes()
+  const navigate = useNavigate()
   const [filterDialogOpen, setFilterDialogOpen] = useState(false)
   const [selectedLabels, setSelectedLabels] = useState<string[]>([])
   const [dateFilter, setDateFilter] = useState<DateFilter>('all')
+  const [isPublicSectionOpen, setIsPublicSectionOpen] = useState(false)
+  const { publicNotes, isLoading: isLoadingPublicNotes } = usePublicSharedNotes(isPublicSectionOpen)
 
   const hasActiveFilters = selectedLabels.length > 0 || dateFilter !== 'all'
 
@@ -155,6 +196,35 @@ export default function NotesSidebar({ onRequestDelete, onNoteSelected }: NotesS
           />
         ))}
       </Box>
+
+      <Box className="notes-sidebar-public-section">
+        <Box
+          className="notes-sidebar-public-header"
+          onClick={() => setIsPublicSectionOpen((prev) => !prev)}
+          role="button"
+          tabIndex={0}
+        >
+          <GlobeDoodle />
+          <Typography className="notes-sidebar-public-title">Notes partagées publiquement</Typography>
+          <ChevronDoodle isOpen={isPublicSectionOpen} />
+        </Box>
+        {isPublicSectionOpen && (
+          <Box className="notes-sidebar-public-list">
+            {isLoadingPublicNotes && (
+              <Box className="notes-sidebar-public-loading">
+                <CircularProgress size={18} />
+              </Box>
+            )}
+            {!isLoadingPublicNotes && publicNotes.length === 0 && (
+              <Typography className="notes-sidebar-empty">Aucune note partagée pour l'instant.</Typography>
+            )}
+            {publicNotes.map((note) => (
+              <PublicNoteListItem key={note.id} note={note} onSelect={() => navigate(`/share/${note.id}`)} />
+            ))}
+          </Box>
+        )}
+      </Box>
+
       <FilterNotesDialog
         open={filterDialogOpen}
         onClose={() => setFilterDialogOpen(false)}

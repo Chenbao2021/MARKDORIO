@@ -6,6 +6,7 @@ export interface Note {
   updatedAt: number
   labels: string[]
   fontFamily: string | null
+  isPublic: boolean
 }
 
 export function normalizeNote(
@@ -15,5 +16,14 @@ export function normalizeNote(
     ...note,
     labels: note.labels ?? [],
     fontFamily: note.fontFamily ?? null,
+    isPublic: note.isPublic ?? false,
   }
+}
+
+export interface SharedNote {
+  ownerId: string
+  title: string
+  content: string
+  fontFamily: string | null
+  updatedAt: number
 }

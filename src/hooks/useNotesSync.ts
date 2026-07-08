@@ -3,7 +3,7 @@ import { collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../context/AuthContext'
 import { useNotes } from '../context/NotesContext'
-import { normalizeNote, type Note } from '../data/note'
+import { normalizeNote, type Note, type SharedNote } from '../data/note'
 import { useLocalStorage } from './useLocalStorage'
 
 const LAST_SYNCED_KEY = 'markdorio.lastSyncedAt'
@@ -82,6 +82,22 @@ export function useNotesSync(): UseNotesSyncResult {
         toUpload.map((n) => setDoc(doc(firestore, 'users', user.uid, 'notes', n.id), n)),
       )
       const hadFailures = uploadResults.some((r) => r.status === 'rejected')
+
+      const publicToUpload = toUpload.filter((n) => n.isPublic)
+      if (publicToUpload.length > 0) {
+        await Promise.allSettled(
+          publicToUpload.map((n) => {
+            const shared: SharedNote = {
+              ownerId: user.uid,
+              title: n.title,
+              content: n.content,
+              fontFamily: n.fontFamily,
+              updatedAt: n.updatedAt,
+            }
+            return setDoc(doc(firestore, 'sharedNotes', n.id), shared)
+          }),
+        )
+      }
 
       const allIds = new Set([...localById.keys(), ...cloudById.keys()])
       const merged: Note[] = []

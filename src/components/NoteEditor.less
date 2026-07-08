@@ -15,6 +15,12 @@
   gap: 12px;
   padding: 12px 20px;
   border-bottom: 2px solid @border;
+
+  @media (max-width: 899px) {
+    &.is-hidden-mobile-preview {
+      display: none;
+    }
+  }
 }
 
 .note-editor-title-input {
@@ -29,21 +35,6 @@
   }
 }
 
-.note-editor-topbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.note-editor-delete-btn,
-.note-editor-settings-btn {
-  border-radius: 4px 6px 4px 6px;
-  &:hover {
-    background: @accent-light;
-  }
-}
-
 .note-editor-labels-input {
   flex: 1 1 200px;
   min-width: 160px;
@@ -51,7 +42,7 @@
 
   .MuiInput-root {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     gap: 4px;
     padding: 4px 10px;
@@ -61,6 +52,7 @@
     font-family: 'Nunito', sans-serif;
     font-size: 0.85rem;
     transition: all 0.15s ease;
+    overflow: hidden;
 
     &:hover {
       border-color: @accent;
@@ -72,11 +64,44 @@
       background: @accent-light;
     }
   }
+
+  .MuiChip-root {
+    min-width: 0;
+    flex-shrink: 1;
+    max-width: 140px;
+  }
+
+  .MuiAutocomplete-input {
+    min-width: 24px;
+    flex-shrink: 1;
+  }
+
+  .note-editor-labels-more {
+    flex-shrink: 0;
+    color: @dark;
+    opacity: 0.6;
+    font-weight: 600;
+  }
+
+  @media (max-width: 899px) {
+    .MuiInput-root {
+      padding: 4px 8px;
+      gap: 3px;
+    }
+
+    .MuiChip-root {
+      max-width: 90px;
+    }
+  }
 }
 
 .note-editor-labels-icon {
   flex-shrink: 0;
   opacity: 0.75;
+}
+
+.note-editor-share-btn {
+  flex-shrink: 0;
 }
 
 .note-editor-mobile-toggle {

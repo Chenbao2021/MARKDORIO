@@ -2,6 +2,7 @@ import { Avatar, Box, Button, IconButton, Menu, MenuItem, Typography } from '@mu
 import { useCallback, useState, type JSX, type MouseEvent } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useNotesSync } from '../hooks/useNotesSync'
+import SettingsMenu from './SettingsMenu'
 import './AuthControls.less'
 
 const SyncDoodle = (): JSX.Element => (
@@ -21,7 +22,19 @@ function formatSyncedTime(timestamp: number): string {
   return new Date(timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
 
-export default function AuthControls(): JSX.Element {
+interface AuthControlsProps {
+  fontValue: string | null
+  onFontChange: (fontId: string | null) => void
+  autoSave: boolean
+  onAutoSaveChange: (enabled: boolean) => void
+}
+
+export default function AuthControls({
+  fontValue,
+  onFontChange,
+  autoSave,
+  onAutoSaveChange,
+}: AuthControlsProps): JSX.Element {
   const { user, isAuthLoading, signInWithGoogle, signOutUser } = useAuth()
   const { isSyncing, lastSyncedAt, syncError, syncNow } = useNotesSync()
   const [signInError, setSignInError] = useState<string | null>(null)
@@ -51,6 +64,12 @@ export default function AuthControls(): JSX.Element {
   if (!user) {
     return (
       <Box className="auth-controls">
+        <SettingsMenu
+          fontValue={fontValue}
+          onFontChange={onFontChange}
+          autoSave={autoSave}
+          onAutoSaveChange={onAutoSaveChange}
+        />
         <Button variant="outlined" onClick={handleSignIn}>
           Se connecter avec Google
         </Button>
@@ -80,6 +99,12 @@ export default function AuthControls(): JSX.Element {
       >
         <SyncDoodle />
       </IconButton>
+      <SettingsMenu
+        fontValue={fontValue}
+        onFontChange={onFontChange}
+        autoSave={autoSave}
+        onAutoSaveChange={onAutoSaveChange}
+      />
       <IconButton className="auth-controls-avatar-btn" onClick={openMenu} aria-label="Compte">
         <Avatar
           className="auth-controls-avatar"

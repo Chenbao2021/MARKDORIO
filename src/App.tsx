@@ -1,17 +1,22 @@
 import { CssBaseline, StyledEngineProvider, ThemeProvider, createTheme } from '@mui/material'
 import { useCallback, useState, type JSX } from 'react'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import AppHeader from './components/AppHeader'
 import NotesSidebar from './components/NotesSidebar'
 import NoteEditor from './components/NoteEditor'
 import EmptyState from './components/EmptyState'
 import DeleteNoteDialog from './components/DeleteNoteDialog'
 import PwaUpdatePrompt from './components/PwaUpdatePrompt'
+import SharedNoteView from './components/SharedNoteView'
 import { NotesProvider, useNotes } from './context/NotesContext'
 import { AuthProvider } from './context/AuthContext'
 import { useNotesSync } from './hooks/useNotesSync'
+import { useLocalStorage } from './hooks/useLocalStorage'
 import type { Note } from './data/note'
 import './index.less'
 import './App.less'
+
+const AUTO_SAVE_KEY = 'markdorio.autoSaveEnabled'
 
 const theme = createTheme({
   palette: {
@@ -70,10 +75,11 @@ const theme = createTheme({
 })
 
 function AppShell(): JSX.Element {
-  const { selectedNote, deleteNote } = useNotes()
+  const { selectedNote, deleteNote, updateNote } = useNotes()
   const { deleteRemoteNote } = useNotesSync()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [noteToDelete, setNoteToDelete] = useState<Note | null>(null)
+  const [autoSave, setAutoSave] = useLocalStorage<boolean>(AUTO_SAVE_KEY, false)
 
   const toggleSidebar = useCallback(() => setSidebarOpen((prev) => !prev), [])
   const closeSidebar = useCallback(() => setSidebarOpen(false), [])
@@ -86,19 +92,28 @@ function AppShell(): JSX.Element {
     setNoteToDelete(null)
   }, [noteToDelete, deleteNote, deleteRemoteNote])
 
+  const handleFontChange = useCallback(
+    (fontId: string | null) => {
+      if (selectedNote) updateNote(selectedNote.id, { fontFamily: fontId })
+    },
+    [selectedNote, updateNote],
+  )
+
   return (
     <div className="app-shell">
-      <AppHeader onToggleSidebar={toggleSidebar} />
+      <AppHeader
+        onToggleSidebar={toggleSidebar}
+        fontValue={selectedNote?.fontFamily ?? null}
+        onFontChange={handleFontChange}
+        autoSave={autoSave}
+        onAutoSaveChange={setAutoSave}
+      />
       <div className="app-body">
         <div className={`app-sidebar-col${sidebarOpen ? ' is-open' : ''}`}>
           <NotesSidebar onRequestDelete={setNoteToDelete} onNoteSelected={closeSidebar} />
         </div>
         <div className="app-main-col">
-          {selectedNote ? (
-            <NoteEditor note={selectedNote} onRequestDelete={setNoteToDelete} />
-          ) : (
-            <EmptyState />
-          )}
+          {selectedNote ? <NoteEditor note={selectedNote} autoSave={autoSave} /> : <EmptyState />}
         </div>
       </div>
       <DeleteNoteDialog note={noteToDelete} onClose={() => setNoteToDelete(null)} onConfirm={handleConfirmDelete} />
@@ -112,11 +127,21 @@ export default function App(): JSX.Element {
     <StyledEngineProvider injectFirst>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <AuthProvider>
-          <NotesProvider>
-            <AppShell />
-          </NotesProvider>
-        </AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/share/:noteId" element={<SharedNoteView />} />
+            <Route
+              path="/*"
+              element={
+                <AuthProvider>
+                  <NotesProvider>
+                    <AppShell />
+                  </NotesProvider>
+                </AuthProvider>
+              }
+            />
+          </Routes>
+        </BrowserRouter>
       </ThemeProvider>
     </StyledEngineProvider>
   )
