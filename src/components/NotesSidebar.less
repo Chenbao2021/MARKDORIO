@@ -109,6 +109,49 @@
   flex-shrink: 0;
 }
 
+.notes-sidebar-label-group {
+  flex-shrink: 0;
+}
+
+.notes-sidebar-label-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 6px 4px;
+  border-radius: 4px 9px 6px 4px;
+
+  &:hover {
+    background: @accent-light;
+  }
+}
+
+.notes-sidebar-label-title {
+  flex: 1;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: @dark;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notes-sidebar-label-count {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: @muted;
+}
+
+.notes-sidebar-label-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+  margin-bottom: 4px;
+  padding-left: 6px;
+}
+
 .notes-sidebar-public-section {
   flex-shrink: 0;
   border-top: 2px dashed @dashed-border;

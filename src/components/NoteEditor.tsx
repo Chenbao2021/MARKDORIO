@@ -1,5 +1,5 @@
 import { Box, IconButton, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type JSX, type UIEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type JSX, type KeyboardEvent, type UIEvent } from 'react'
 import type { Note } from '../data/note'
 import { useAuth } from '../context/AuthContext'
 import { useNotes } from '../context/NotesContext'
@@ -60,6 +60,22 @@ export default function NoteEditor({ note, autoSave }: NoteEditorProps): JSX.Ele
 
   const handleContentChange = useCallback(
     (e: ChangeEvent<HTMLTextAreaElement>) => updateNote(note.id, { content: e.target.value }),
+    [note.id, updateNote],
+  )
+
+  const handleTextareaKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key !== 'Tab') return
+      e.preventDefault()
+      const textarea = e.currentTarget
+      const { selectionStart, selectionEnd, value } = textarea
+      const newValue = `${value.slice(0, selectionStart)}  ${value.slice(selectionEnd)}`
+      const cursor = selectionStart + 2
+      updateNote(note.id, { content: newValue })
+      requestAnimationFrame(() => {
+        textarea.selectionStart = textarea.selectionEnd = cursor
+      })
+    },
     [note.id, updateNote],
   )
 
@@ -166,6 +182,7 @@ export default function NoteEditor({ note, autoSave }: NoteEditorProps): JSX.Ele
             className="note-editor-textarea"
             value={note.content}
             onChange={handleContentChange}
+            onKeyDown={handleTextareaKeyDown}
             onScroll={handleWriteScroll}
             onBlur={handleTextareaBlur}
             spellCheck={false}

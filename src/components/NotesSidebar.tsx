@@ -137,6 +137,7 @@ export default function NotesSidebar({ onRequestDelete, onNoteSelected }: NotesS
   const [selectedLabels, setSelectedLabels] = useState<string[]>([])
   const [dateFilter, setDateFilter] = useState<DateFilter>('all')
   const [isPublicSectionOpen, setIsPublicSectionOpen] = useState(false)
+  const [openLabel, setOpenLabel] = useState<string | null>(null)
   const { publicNotes, isLoading: isLoadingPublicNotes } = usePublicSharedNotes(isPublicSectionOpen)
 
   const hasActiveFilters = selectedLabels.length > 0 || dateFilter !== 'all'
@@ -149,6 +150,22 @@ export default function NotesSidebar({ onRequestDelete, onNoteSelected }: NotesS
         return labelMatch && matchesDateFilter(note.updatedAt, dateFilter)
       }),
     [notes, selectedLabels, dateFilter],
+  )
+
+  const labelGroups = useMemo(
+    () =>
+      allLabels
+        .map((label) => ({
+          label,
+          notes: filteredNotes.filter((note) => note.labels.includes(label)),
+        }))
+        .filter((group) => group.notes.length > 0),
+    [allLabels, filteredNotes],
+  )
+
+  const unlabeledNotes = useMemo(
+    () => filteredNotes.filter((note) => note.labels.length === 0),
+    [filteredNotes],
   )
 
   const resetFilters = () => {
@@ -183,7 +200,40 @@ export default function NotesSidebar({ onRequestDelete, onNoteSelected }: NotesS
             {notes.length === 0 ? 'Pas encore de note.' : 'Aucune note ne correspond aux filtres.'}
           </Typography>
         )}
-        {filteredNotes.map((note) => (
+        {labelGroups.map((group) => {
+          const isOpen = openLabel === group.label
+          return (
+            <Box key={group.label} className="notes-sidebar-label-group">
+              <Box
+                className="notes-sidebar-label-header"
+                onClick={() => setOpenLabel(isOpen ? null : group.label)}
+                role="button"
+                tabIndex={0}
+              >
+                <Typography className="notes-sidebar-label-title">{group.label}</Typography>
+                <Typography className="notes-sidebar-label-count">{group.notes.length}</Typography>
+                <ChevronDoodle isOpen={isOpen} />
+              </Box>
+              {isOpen && (
+                <Box className="notes-sidebar-label-list">
+                  {group.notes.map((note) => (
+                    <NoteListItem
+                      key={note.id}
+                      note={note}
+                      isActive={note.id === selectedNoteId}
+                      onSelect={() => {
+                        selectNote(note.id)
+                        onNoteSelected?.()
+                      }}
+                      onDelete={() => onRequestDelete(note)}
+                    />
+                  ))}
+                </Box>
+              )}
+            </Box>
+          )
+        })}
+        {unlabeledNotes.map((note) => (
           <NoteListItem
             key={note.id}
             note={note}
