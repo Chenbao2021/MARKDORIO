@@ -138,7 +138,7 @@ export default function NotesSidebar({ onRequestDelete, onNoteSelected }: NotesS
   const [dateFilter, setDateFilter] = useState<DateFilter>('all')
   const [isPublicSectionOpen, setIsPublicSectionOpen] = useState(false)
   const [openLabel, setOpenLabel] = useState<string | null>(null)
-  const { publicNotes, isLoading: isLoadingPublicNotes } = usePublicSharedNotes(isPublicSectionOpen)
+  const { publicNotes, isLoading: isLoadingPublicNotes } = usePublicSharedNotes()
 
   const hasActiveFilters = selectedLabels.length > 0 || dateFilter !== 'all'
 

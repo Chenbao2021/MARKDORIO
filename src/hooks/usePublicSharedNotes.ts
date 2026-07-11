@@ -14,12 +14,12 @@ interface UsePublicSharedNotesResult {
   isLoading: boolean
 }
 
-export function usePublicSharedNotes(enabled: boolean): UsePublicSharedNotesResult {
+export function usePublicSharedNotes(): UsePublicSharedNotesResult {
   const [publicNotes, setPublicNotes] = useState<PublicSharedNote[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    if (!enabled || !db) return
+    if (!db) return
 
     setIsLoading(true)
     const q = query(collection(db, 'sharedNotes'), orderBy('updatedAt', 'desc'), limit(PUBLIC_NOTES_LIMIT))
@@ -32,7 +32,7 @@ export function usePublicSharedNotes(enabled: boolean): UsePublicSharedNotesResu
       () => setIsLoading(false),
     )
     return unsubscribe
-  }, [enabled])
+  }, [])
 
   return { publicNotes, isLoading }
 }
