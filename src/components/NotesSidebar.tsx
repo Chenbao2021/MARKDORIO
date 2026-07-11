@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState, type JSX } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Note } from '../data/note'
 import { useNotes } from '../context/NotesContext'
+import { useAuth } from '../context/AuthContext'
 import { usePublicSharedNotes, type PublicSharedNote } from '../hooks/usePublicSharedNotes'
 import FilterNotesDialog, { type DateFilter } from './FilterNotesDialog'
 import './NotesSidebar.less'
@@ -148,6 +149,7 @@ interface NoteEntry {
 
 export default function NotesSidebar({ onRequestDelete, onNoteSelected }: NotesSidebarProps): JSX.Element {
   const { notes, selectedNoteId, selectNote, createNote, allLabels } = useNotes()
+  const { user } = useAuth()
   const navigate = useNavigate()
   const [filterDialogOpen, setFilterDialogOpen] = useState(false)
   const [selectedLabels, setSelectedLabels] = useState<string[]>([])
@@ -170,11 +172,12 @@ export default function NotesSidebar({ onRequestDelete, onNoteSelected }: NotesS
   const filteredPublicNotes = useMemo(
     () =>
       publicNotes.filter((note) => {
+        if (note.ownerId === user?.uid) return false
         const labelMatch =
           selectedLabels.length === 0 || note.labels.some((label) => selectedLabels.includes(label))
         return labelMatch && matchesDateFilter(note.updatedAt, dateFilter)
       }),
-    [publicNotes, selectedLabels, dateFilter],
+    [publicNotes, user, selectedLabels, dateFilter],
   )
 
   const allDisplayLabels = useMemo(() => {
