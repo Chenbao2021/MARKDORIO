@@ -1,5 +1,5 @@
 import { Box, Button, Chip, IconButton, Typography } from '@mui/material'
-import { useMemo, useState, type JSX } from 'react'
+import { useCallback, useMemo, useState, type JSX } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Note } from '../data/note'
 import { useNotes } from '../context/NotesContext'
@@ -128,12 +128,19 @@ function PublicNoteListItem({ note, onSelect }: PublicNoteListItemProps): JSX.El
           <Typography className="notes-sidebar-item-title">{note.title || 'Sans titre'}</Typography>
         </Box>
         <Typography className="notes-sidebar-item-time">{formatRelativeTime(note.updatedAt)}</Typography>
+        {note.labels.length > 0 && (
+          <Box className="notes-sidebar-item-labels">
+            {note.labels.map((label) => (
+              <Chip key={label} label={label} size="small" className="notes-sidebar-item-label" />
+            ))}
+          </Box>
+        )}
       </Box>
     </Box>
   )
 }
 
-interface UnlabeledEntry {
+interface NoteEntry {
   id: string
   updatedAt: number
   render: () => JSX.Element
@@ -160,32 +167,26 @@ export default function NotesSidebar({ onRequestDelete, onNoteSelected }: NotesS
     [notes, selectedLabels, dateFilter],
   )
 
-  const labelGroups = useMemo(
+  const filteredPublicNotes = useMemo(
     () =>
-      allLabels
-        .map((label) => ({
-          label,
-          notes: filteredNotes.filter((note) => note.labels.includes(label)),
-        }))
-        .filter((group) => group.notes.length > 0),
-    [allLabels, filteredNotes],
-  )
-
-  const unlabeledNotes = useMemo(
-    () => filteredNotes.filter((note) => note.labels.length === 0),
-    [filteredNotes],
-  )
-
-  const publicSidebarNotes = useMemo(
-    () =>
-      selectedLabels.length === 0
-        ? publicNotes.filter((note) => matchesDateFilter(note.updatedAt, dateFilter))
-        : [],
+      publicNotes.filter((note) => {
+        const labelMatch =
+          selectedLabels.length === 0 || note.labels.some((label) => selectedLabels.includes(label))
+        return labelMatch && matchesDateFilter(note.updatedAt, dateFilter)
+      }),
     [publicNotes, selectedLabels, dateFilter],
   )
 
-  const unlabeledEntries = useMemo<UnlabeledEntry[]>(() => {
-    const own: UnlabeledEntry[] = unlabeledNotes.map((note) => ({
+  const allDisplayLabels = useMemo(() => {
+    const labelSet = new Set(allLabels)
+    for (const note of filteredPublicNotes) {
+      for (const label of note.labels) labelSet.add(label)
+    }
+    return [...labelSet].sort((a, b) => a.localeCompare(b, 'fr'))
+  }, [allLabels, filteredPublicNotes])
+
+  const toOwnEntry = useCallback(
+    (note: Note): NoteEntry => ({
       id: note.id,
       updatedAt: note.updatedAt,
       render: () => (
@@ -200,16 +201,40 @@ export default function NotesSidebar({ onRequestDelete, onNoteSelected }: NotesS
           onDelete={() => onRequestDelete(note)}
         />
       ),
-    }))
-    const pub: UnlabeledEntry[] = publicSidebarNotes.map((note) => ({
+    }),
+    [selectedNoteId, selectNote, onNoteSelected, onRequestDelete],
+  )
+
+  const toPublicEntry = useCallback(
+    (note: PublicSharedNote): NoteEntry => ({
       id: note.id,
       updatedAt: note.updatedAt,
       render: () => (
         <PublicNoteListItem key={note.id} note={note} onSelect={() => navigate(`/share/${note.id}`)} />
       ),
-    }))
+    }),
+    [navigate],
+  )
+
+  const labelGroups = useMemo(
+    () =>
+      allDisplayLabels
+        .map((label) => {
+          const entries = [
+            ...filteredNotes.filter((note) => note.labels.includes(label)).map(toOwnEntry),
+            ...filteredPublicNotes.filter((note) => note.labels.includes(label)).map(toPublicEntry),
+          ].sort((a, b) => b.updatedAt - a.updatedAt)
+          return { label, entries }
+        })
+        .filter((group) => group.entries.length > 0),
+    [allDisplayLabels, filteredNotes, filteredPublicNotes, toOwnEntry, toPublicEntry],
+  )
+
+  const unlabeledEntries = useMemo<NoteEntry[]>(() => {
+    const own = filteredNotes.filter((note) => note.labels.length === 0).map(toOwnEntry)
+    const pub = filteredPublicNotes.filter((note) => note.labels.length === 0).map(toPublicEntry)
     return [...own, ...pub].sort((a, b) => b.updatedAt - a.updatedAt)
-  }, [unlabeledNotes, publicSidebarNotes, selectedNoteId, selectNote, onNoteSelected, onRequestDelete, navigate])
+  }, [filteredNotes, filteredPublicNotes, toOwnEntry, toPublicEntry])
 
   const resetFilters = () => {
     setSelectedLabels([])
@@ -238,7 +263,7 @@ export default function NotesSidebar({ onRequestDelete, onNoteSelected }: NotesS
         </Button>
       </Box>
       <Box className="notes-sidebar-list">
-        {filteredNotes.length === 0 && publicSidebarNotes.length === 0 && (
+        {filteredNotes.length === 0 && filteredPublicNotes.length === 0 && (
           <Typography className="notes-sidebar-empty">
             {notes.length === 0 ? 'Pas encore de note.' : 'Aucune note ne correspond aux filtres.'}
           </Typography>
@@ -254,24 +279,11 @@ export default function NotesSidebar({ onRequestDelete, onNoteSelected }: NotesS
                 tabIndex={0}
               >
                 <Typography className="notes-sidebar-label-title">{group.label}</Typography>
-                <Typography className="notes-sidebar-label-count">{group.notes.length}</Typography>
+                <Typography className="notes-sidebar-label-count">{group.entries.length}</Typography>
                 <ChevronDoodle isOpen={isOpen} />
               </Box>
               {isOpen && (
-                <Box className="notes-sidebar-label-list">
-                  {group.notes.map((note) => (
-                    <NoteListItem
-                      key={note.id}
-                      note={note}
-                      isActive={note.id === selectedNoteId}
-                      onSelect={() => {
-                        selectNote(note.id)
-                        onNoteSelected?.()
-                      }}
-                      onDelete={() => onRequestDelete(note)}
-                    />
-                  ))}
-                </Box>
+                <Box className="notes-sidebar-label-list">{group.entries.map((entry) => entry.render())}</Box>
               )}
             </Box>
           )

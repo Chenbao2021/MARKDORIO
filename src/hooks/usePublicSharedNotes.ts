@@ -26,7 +26,12 @@ export function usePublicSharedNotes(): UsePublicSharedNotesResult {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        setPublicNotes(snapshot.docs.map((d) => ({ id: d.id, ...(d.data() as SharedNote) })))
+        setPublicNotes(
+          snapshot.docs.map((d) => {
+            const data = d.data() as SharedNote
+            return { id: d.id, ...data, labels: data.labels ?? [] }
+          }),
+        )
         setIsLoading(false)
       },
       () => setIsLoading(false),

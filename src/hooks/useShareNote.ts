@@ -33,6 +33,7 @@ export function useShareNote(): UseShareNoteResult {
           content: note.content,
           fontFamily: note.fontFamily,
           updatedAt: note.updatedAt,
+          labels: note.labels,
         }
         await setDoc(doc(db, 'sharedNotes', note.id), shared)
         updateNote(note.id, { isPublic: true })

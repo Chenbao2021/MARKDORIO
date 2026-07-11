@@ -26,4 +26,5 @@ export interface SharedNote {
   content: string
   fontFamily: string | null
   updatedAt: number
+  labels: string[]
 }

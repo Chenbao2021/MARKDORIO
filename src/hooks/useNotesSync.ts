@@ -93,6 +93,7 @@ export function useNotesSync(): UseNotesSyncResult {
               content: n.content,
               fontFamily: n.fontFamily,
               updatedAt: n.updatedAt,
+              labels: n.labels,
             }
             return setDoc(doc(firestore, 'sharedNotes', n.id), shared)
           }),
