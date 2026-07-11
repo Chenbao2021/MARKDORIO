@@ -2,6 +2,7 @@ import { Autocomplete, Box, Button, Chip, Dialog, TextField, Typography } from '
 import { useCallback, type JSX } from 'react'
 import type { Note } from '../data/note'
 import { useNotes } from '../context/NotesContext'
+import { useShareNote } from '../hooks/useShareNote'
 import './ManageLabelsDialog.less'
 
 interface ManageLabelsDialogProps {
@@ -13,13 +14,16 @@ const EMPTY_VALUE: string[] = []
 
 export default function ManageLabelsDialog({ note, onClose }: ManageLabelsDialogProps): JSX.Element {
   const { updateNote, allLabels } = useNotes()
+  const { updateSharedLabels } = useShareNote()
 
   const handleRemove = useCallback(
     (label: string) => {
       if (!note) return
-      updateNote(note.id, { labels: note.labels.filter((l) => l !== label) })
+      const labels = note.labels.filter((l) => l !== label)
+      updateNote(note.id, { labels })
+      if (note.isPublic) void updateSharedLabels(note.id, labels)
     },
-    [note, updateNote],
+    [note, updateNote, updateSharedLabels],
   )
 
   const handleAdd = useCallback(
@@ -27,9 +31,11 @@ export default function ManageLabelsDialog({ note, onClose }: ManageLabelsDialog
       if (!note) return
       const cleaned = raw.trim()
       if (!cleaned || note.labels.includes(cleaned)) return
-      updateNote(note.id, { labels: [...note.labels, cleaned] })
+      const labels = [...note.labels, cleaned]
+      updateNote(note.id, { labels })
+      if (note.isPublic) void updateSharedLabels(note.id, labels)
     },
-    [note, updateNote],
+    [note, updateNote, updateSharedLabels],
   )
 
   const suggestions = note ? allLabels.filter((l) => !note.labels.includes(l)) : []

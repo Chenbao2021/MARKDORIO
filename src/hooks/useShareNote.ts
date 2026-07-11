@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { deleteDoc, doc, setDoc } from 'firebase/firestore'
+import { deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../context/AuthContext'
 import { useNotes } from '../context/NotesContext'
@@ -10,6 +10,7 @@ interface UseShareNoteResult {
   shareError: string | null
   publishNote: (note: Note) => Promise<void>
   unpublishNote: (note: Note) => Promise<void>
+  updateSharedLabels: (noteId: string, labels: string[]) => Promise<void>
 }
 
 export function useShareNote(): UseShareNoteResult {
@@ -62,5 +63,14 @@ export function useShareNote(): UseShareNoteResult {
     [updateNote],
   )
 
-  return { isSharing, shareError, publishNote, unpublishNote }
+  const updateSharedLabels = useCallback(async (noteId: string, labels: string[]) => {
+    if (!db) return
+    try {
+      await updateDoc(doc(db, 'sharedNotes', noteId), { labels })
+    } catch {
+      // la prochaine synchronisation complète rattrapera l'écart
+    }
+  }, [])
+
+  return { isSharing, shareError, publishNote, unpublishNote, updateSharedLabels }
 }
