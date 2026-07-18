@@ -1,6 +1,7 @@
 import { Divider, IconButton, ListItemText, ListSubheader, Menu, MenuItem, Switch } from '@mui/material'
 import { useCallback, useEffect, useState, type JSX, type MouseEvent } from 'react'
 import { FONT_OPTIONS } from '../data/fonts'
+import { FONT_SIZE_OPTIONS } from '../data/fontSizes'
 import { loadGoogleFont } from '../utils/loadGoogleFont'
 
 interface SettingsMenuProps {
@@ -8,6 +9,8 @@ interface SettingsMenuProps {
   onFontChange: (fontId: string | null) => void
   autoSave: boolean
   onAutoSaveChange: (enabled: boolean) => void
+  contentFontSize: string
+  onContentFontSizeChange: (id: string) => void
 }
 
 const SettingsDoodle = (): JSX.Element => (
@@ -27,6 +30,8 @@ export default function SettingsMenu({
   onFontChange,
   autoSave,
   onAutoSaveChange,
+  contentFontSize,
+  onContentFontSizeChange,
 }: SettingsMenuProps): JSX.Element {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
 
@@ -48,6 +53,14 @@ export default function SettingsMenu({
   const handleAutoSaveToggle = useCallback(() => {
     onAutoSaveChange(!autoSave)
   }, [autoSave, onAutoSaveChange])
+
+  const handleFontSizeSelect = useCallback(
+    (id: string) => {
+      onContentFontSizeChange(id)
+      handleClose()
+    },
+    [onContentFontSizeChange, handleClose],
+  )
 
   return (
     <>
@@ -82,6 +95,13 @@ export default function SettingsMenu({
             style={{ fontFamily: f.family }}
           >
             {f.label}
+          </MenuItem>
+        ))}
+        <Divider />
+        <ListSubheader disableSticky>Taille du texte</ListSubheader>
+        {FONT_SIZE_OPTIONS.map((s) => (
+          <MenuItem key={s.id} selected={contentFontSize === s.id} onClick={() => handleFontSizeSelect(s.id)}>
+            {s.label}
           </MenuItem>
         ))}
       </Menu>

@@ -13,10 +13,12 @@ import { AuthProvider } from './context/AuthContext'
 import { useNotesSync } from './hooks/useNotesSync'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import type { Note } from './data/note'
+import { CONTENT_FONT_SIZE_KEY, DEFAULT_FONT_SIZE_ID } from './data/fontSizes'
 import './index.less'
 import './App.less'
 
 const AUTO_SAVE_KEY = 'markdorio.autoSaveEnabled'
+const SIDEBAR_COLLAPSED_KEY = 'markdorio.sidebarCollapsed'
 
 const theme = createTheme({
   palette: {
@@ -80,9 +82,12 @@ function AppShell(): JSX.Element {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [noteToDelete, setNoteToDelete] = useState<Note | null>(null)
   const [autoSave, setAutoSave] = useLocalStorage<boolean>(AUTO_SAVE_KEY, false)
+  const [contentFontSize, setContentFontSize] = useLocalStorage<string>(CONTENT_FONT_SIZE_KEY, DEFAULT_FONT_SIZE_ID)
+  const [sidebarCollapsed, setSidebarCollapsed] = useLocalStorage<boolean>(SIDEBAR_COLLAPSED_KEY, false)
 
   const toggleSidebar = useCallback(() => setSidebarOpen((prev) => !prev), [])
   const closeSidebar = useCallback(() => setSidebarOpen(false), [])
+  const toggleSidebarCollapsed = useCallback(() => setSidebarCollapsed(!sidebarCollapsed), [sidebarCollapsed, setSidebarCollapsed])
 
   const handleConfirmDelete = useCallback(() => {
     if (noteToDelete) {
@@ -107,13 +112,24 @@ function AppShell(): JSX.Element {
         onFontChange={handleFontChange}
         autoSave={autoSave}
         onAutoSaveChange={setAutoSave}
+        contentFontSize={contentFontSize}
+        onContentFontSizeChange={setContentFontSize}
       />
       <div className="app-body">
-        <div className={`app-sidebar-col${sidebarOpen ? ' is-open' : ''}`}>
-          <NotesSidebar onRequestDelete={setNoteToDelete} onNoteSelected={closeSidebar} />
+        <div className={`app-sidebar-col${sidebarOpen ? ' is-open' : ''}${sidebarCollapsed ? ' is-collapsed' : ''}`}>
+          <NotesSidebar
+            onRequestDelete={setNoteToDelete}
+            onNoteSelected={closeSidebar}
+            collapsed={sidebarCollapsed}
+            onToggleCollapse={toggleSidebarCollapsed}
+          />
         </div>
         <div className="app-main-col">
-          {selectedNote ? <NoteEditor note={selectedNote} autoSave={autoSave} /> : <EmptyState />}
+          {selectedNote ? (
+            <NoteEditor note={selectedNote} autoSave={autoSave} contentFontSize={contentFontSize} />
+          ) : (
+            <EmptyState />
+          )}
         </div>
       </div>
       <DeleteNoteDialog note={noteToDelete} onClose={() => setNoteToDelete(null)} onConfirm={handleConfirmDelete} />

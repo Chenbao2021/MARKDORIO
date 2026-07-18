@@ -1,16 +1,19 @@
 import { Box, Button, Chip, IconButton, Typography } from '@mui/material'
-import { useCallback, useMemo, useState, type JSX } from 'react'
+import { useCallback, useMemo, useState, type JSX, type MouseEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Note } from '../data/note'
 import { useNotes } from '../context/NotesContext'
 import { useAuth } from '../context/AuthContext'
 import { usePublicSharedNotes, type PublicSharedNote } from '../hooks/usePublicSharedNotes'
+import { useShareNote } from '../hooks/useShareNote'
 import FilterNotesDialog, { type DateFilter } from './FilterNotesDialog'
 import './NotesSidebar.less'
 
 interface NotesSidebarProps {
   onRequestDelete: (note: Note) => void
   onNoteSelected?: () => void
+  collapsed: boolean
+  onToggleCollapse: () => void
 }
 
 const TrashDoodle = (): JSX.Element => (
@@ -53,6 +56,31 @@ const ChevronDoodle = ({ isOpen }: { isOpen: boolean }): JSX.Element => (
   </svg>
 )
 
+const RailToggleDoodle = ({ collapsed }: { collapsed: boolean }): JSX.Element => (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 14 14"
+    fill="none"
+    aria-hidden="true"
+    className={`notes-sidebar-rail-toggle${collapsed ? ' is-collapsed' : ''}`}
+  >
+    <path d="M9 2 L4 7 L9 12" stroke="#2d2d2d" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+const CopyDoodle = (): JSX.Element => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <path d="M7 2 V12 M2 7 H12" stroke="#2d2d2d" strokeWidth="1.6" strokeLinecap="round" />
+  </svg>
+)
+
+const CheckDoodle = (): JSX.Element => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <path d="M2.5 7.5 L5.5 10.5 L11.5 3.5" stroke="#2d2d2d" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
 const GlobeDoodle = (): JSX.Element => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
     <circle cx="8" cy="8" r="6" stroke="#6b7280" strokeWidth="1.4" />
@@ -91,7 +119,10 @@ function NoteListItem({ note, isActive, onSelect, onDelete }: NoteListItemProps)
   return (
     <Box className={`notes-sidebar-item${isActive ? ' is-active' : ''}`} onClick={onSelect}>
       <Box className="notes-sidebar-item-main">
-        <Typography className="notes-sidebar-item-title">{note.title || 'Sans titre'}</Typography>
+        <Box className="notes-sidebar-item-title-row">
+          {note.isPublic && <GlobeDoodle />}
+          <Typography className="notes-sidebar-item-title">{note.title || 'Sans titre'}</Typography>
+        </Box>
         <Typography className="notes-sidebar-item-time">{formatRelativeTime(note.updatedAt)}</Typography>
         {note.labels.length > 0 && (
           <Box className="notes-sidebar-item-labels">
@@ -118,9 +149,22 @@ function NoteListItem({ note, isActive, onSelect, onDelete }: NoteListItemProps)
 interface PublicNoteListItemProps {
   note: PublicSharedNote
   onSelect: () => void
+  onCopy: () => void
 }
 
-function PublicNoteListItem({ note, onSelect }: PublicNoteListItemProps): JSX.Element {
+function PublicNoteListItem({ note, onSelect, onCopy }: PublicNoteListItemProps): JSX.Element {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = useCallback(
+    (e: MouseEvent) => {
+      e.stopPropagation()
+      onCopy()
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1200)
+    },
+    [onCopy],
+  )
+
   return (
     <Box className="notes-sidebar-item notes-sidebar-item--public" onClick={onSelect}>
       <Box className="notes-sidebar-item-main">
@@ -137,6 +181,13 @@ function PublicNoteListItem({ note, onSelect }: PublicNoteListItemProps): JSX.El
           </Box>
         )}
       </Box>
+      <IconButton
+        className="notes-sidebar-item-copy"
+        aria-label="Copier dans mes notes"
+        onClick={handleCopy}
+      >
+        {copied ? <CheckDoodle /> : <CopyDoodle />}
+      </IconButton>
     </Box>
   )
 }
@@ -147,14 +198,21 @@ interface NoteEntry {
   render: () => JSX.Element
 }
 
-export default function NotesSidebar({ onRequestDelete, onNoteSelected }: NotesSidebarProps): JSX.Element {
-  const { notes, selectedNoteId, selectNote, createNote, allLabels } = useNotes()
+export default function NotesSidebar({
+  onRequestDelete,
+  onNoteSelected,
+  collapsed,
+  onToggleCollapse,
+}: NotesSidebarProps): JSX.Element {
+  const { notes, selectedNoteId, selectNote, createNote, importNote, allLabels } = useNotes()
   const { user } = useAuth()
+  const { backupNote } = useShareNote()
   const navigate = useNavigate()
   const [filterDialogOpen, setFilterDialogOpen] = useState(false)
   const [selectedLabels, setSelectedLabels] = useState<string[]>([])
   const [dateFilter, setDateFilter] = useState<DateFilter>('all')
   const [openLabel, setOpenLabel] = useState<string | null>(null)
+  const [openSharedLabel, setOpenSharedLabel] = useState<string | null>(null)
   const { publicNotes } = usePublicSharedNotes()
 
   const hasActiveFilters = selectedLabels.length > 0 || dateFilter !== 'all'
@@ -180,13 +238,13 @@ export default function NotesSidebar({ onRequestDelete, onNoteSelected }: NotesS
     [publicNotes, user, selectedLabels, dateFilter],
   )
 
-  const allDisplayLabels = useMemo(() => {
-    const labelSet = new Set(allLabels)
+  const sharedLabels = useMemo(() => {
+    const labelSet = new Set<string>()
     for (const note of filteredPublicNotes) {
       for (const label of note.labels) labelSet.add(label)
     }
     return [...labelSet].sort((a, b) => a.localeCompare(b, 'fr'))
-  }, [allLabels, filteredPublicNotes])
+  }, [filteredPublicNotes])
 
   const toOwnEntry = useCallback(
     (note: Note): NoteEntry => ({
@@ -208,36 +266,82 @@ export default function NotesSidebar({ onRequestDelete, onNoteSelected }: NotesS
     [selectedNoteId, selectNote, onNoteSelected, onRequestDelete],
   )
 
+  const handleCopyPublicNote = useCallback(
+    (note: PublicSharedNote) => {
+      const created = importNote({
+        title: note.title,
+        content: note.content,
+        labels: note.labels,
+        fontFamily: note.fontFamily,
+      })
+      selectNote(created.id)
+      onNoteSelected?.()
+      if (user) void backupNote(created)
+    },
+    [importNote, selectNote, onNoteSelected, user, backupNote],
+  )
+
   const toPublicEntry = useCallback(
     (note: PublicSharedNote): NoteEntry => ({
       id: note.id,
       updatedAt: note.updatedAt,
       render: () => (
-        <PublicNoteListItem key={note.id} note={note} onSelect={() => navigate(`/share/${note.id}`)} />
+        <PublicNoteListItem
+          key={note.id}
+          note={note}
+          onSelect={() => navigate(`/share/${note.id}`)}
+          onCopy={() => handleCopyPublicNote(note)}
+        />
       ),
     }),
-    [navigate],
+    [navigate, handleCopyPublicNote],
   )
 
-  const labelGroups = useMemo(
+  const ownLabelGroups = useMemo(
     () =>
-      allDisplayLabels
-        .map((label) => {
-          const entries = [
-            ...filteredNotes.filter((note) => note.labels.includes(label)).map(toOwnEntry),
-            ...filteredPublicNotes.filter((note) => note.labels.includes(label)).map(toPublicEntry),
-          ].sort((a, b) => b.updatedAt - a.updatedAt)
-          return { label, entries }
-        })
+      allLabels
+        .map((label) => ({
+          label,
+          entries: filteredNotes
+            .filter((note) => note.labels.includes(label))
+            .map(toOwnEntry)
+            .sort((a, b) => b.updatedAt - a.updatedAt),
+        }))
         .filter((group) => group.entries.length > 0),
-    [allDisplayLabels, filteredNotes, filteredPublicNotes, toOwnEntry, toPublicEntry],
+    [allLabels, filteredNotes, toOwnEntry],
   )
 
-  const unlabeledEntries = useMemo<NoteEntry[]>(() => {
-    const own = filteredNotes.filter((note) => note.labels.length === 0).map(toOwnEntry)
-    const pub = filteredPublicNotes.filter((note) => note.labels.length === 0).map(toPublicEntry)
-    return [...own, ...pub].sort((a, b) => b.updatedAt - a.updatedAt)
-  }, [filteredNotes, filteredPublicNotes, toOwnEntry, toPublicEntry])
+  const ownUnlabeledEntries = useMemo<NoteEntry[]>(
+    () =>
+      filteredNotes
+        .filter((note) => note.labels.length === 0)
+        .map(toOwnEntry)
+        .sort((a, b) => b.updatedAt - a.updatedAt),
+    [filteredNotes, toOwnEntry],
+  )
+
+  const sharedLabelGroups = useMemo(
+    () =>
+      sharedLabels
+        .map((label) => ({
+          label,
+          entries: filteredPublicNotes
+            .filter((note) => note.labels.includes(label))
+            .map(toPublicEntry)
+            .sort((a, b) => b.updatedAt - a.updatedAt),
+        }))
+        .filter((group) => group.entries.length > 0),
+    [sharedLabels, filteredPublicNotes, toPublicEntry],
+  )
+
+  const sharedUnlabeledEntries = useMemo<NoteEntry[]>(
+    () =>
+      filteredPublicNotes
+        .filter((note) => note.labels.length === 0)
+        .map(toPublicEntry)
+        .sort((a, b) => b.updatedAt - a.updatedAt),
+    [filteredPublicNotes, toPublicEntry],
+  )
 
   const resetFilters = () => {
     setSelectedLabels([])
@@ -245,53 +349,94 @@ export default function NotesSidebar({ onRequestDelete, onNoteSelected }: NotesS
   }
 
   return (
-    <Box className="notes-sidebar">
-      <Box className="notes-sidebar-actions">
-        <IconButton
-          className={`notes-sidebar-filter-btn${hasActiveFilters ? ' has-active-filters' : ''}`}
-          aria-label="Filtrer les notes"
-          onClick={() => setFilterDialogOpen(true)}
-        >
-          <SearchDoodle />
-        </IconButton>
-        <Button
-          variant="outlined"
-          className="notes-sidebar-new-btn"
-          onClick={() => {
-            createNote()
-            onNoteSelected?.()
-          }}
-        >
-          + Nouvelle note
-        </Button>
-      </Box>
-      <Box className="notes-sidebar-list">
-        {filteredNotes.length === 0 && filteredPublicNotes.length === 0 && (
-          <Typography className="notes-sidebar-empty">
-            {notes.length === 0 ? 'Pas encore de note.' : 'Aucune note ne correspond aux filtres.'}
-          </Typography>
-        )}
-        {labelGroups.map((group) => {
-          const isOpen = openLabel === group.label
-          return (
-            <Box key={group.label} className="notes-sidebar-label-group">
-              <Box
-                className="notes-sidebar-label-header"
-                onClick={() => setOpenLabel(isOpen ? null : group.label)}
-                role="button"
-                tabIndex={0}
-              >
-                <Typography className="notes-sidebar-label-title">{group.label}</Typography>
-                <Typography className="notes-sidebar-label-count">{group.entries.length}</Typography>
-                <ChevronDoodle isOpen={isOpen} />
+    <Box className={`notes-sidebar${collapsed ? ' is-collapsed' : ''}`}>
+      {!collapsed && (
+        <>
+          <Box className="notes-sidebar-actions">
+            <IconButton
+              className={`notes-sidebar-filter-btn${hasActiveFilters ? ' has-active-filters' : ''}`}
+              aria-label="Filtrer les notes"
+              onClick={() => setFilterDialogOpen(true)}
+            >
+              <SearchDoodle />
+            </IconButton>
+            <Button
+              variant="outlined"
+              className="notes-sidebar-new-btn"
+              onClick={() => {
+                createNote()
+                onNoteSelected?.()
+              }}
+            >
+              + Nouvelle note
+            </Button>
+          </Box>
+          <Box className="notes-sidebar-list">
+            {filteredNotes.length === 0 && filteredPublicNotes.length === 0 && (
+              <Typography className="notes-sidebar-empty">
+                {notes.length === 0 ? 'Pas encore de note.' : 'Aucune note ne correspond aux filtres.'}
+              </Typography>
+            )}
+            {ownLabelGroups.map((group) => {
+              const isOpen = openLabel === group.label
+              return (
+                <Box key={group.label} className="notes-sidebar-label-group">
+                  <Box
+                    className="notes-sidebar-label-header"
+                    onClick={() => setOpenLabel(isOpen ? null : group.label)}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <Typography className="notes-sidebar-label-title">{group.label}</Typography>
+                    <Typography className="notes-sidebar-label-count">{group.entries.length}</Typography>
+                    <ChevronDoodle isOpen={isOpen} />
+                  </Box>
+                  {isOpen && (
+                    <Box className="notes-sidebar-label-list">{group.entries.map((entry) => entry.render())}</Box>
+                  )}
+                </Box>
+              )
+            })}
+            {ownUnlabeledEntries.map((entry) => entry.render())}
+
+            {filteredPublicNotes.length > 0 && (
+              <Box className="notes-sidebar-shared-section">
+                <Typography className="notes-sidebar-shared-title">Partagées</Typography>
+                {sharedLabelGroups.map((group) => {
+                  const isOpen = openSharedLabel === group.label
+                  return (
+                    <Box key={group.label} className="notes-sidebar-label-group">
+                      <Box
+                        className="notes-sidebar-label-header"
+                        onClick={() => setOpenSharedLabel(isOpen ? null : group.label)}
+                        role="button"
+                        tabIndex={0}
+                      >
+                        <Typography className="notes-sidebar-label-title">{group.label}</Typography>
+                        <Typography className="notes-sidebar-label-count">{group.entries.length}</Typography>
+                        <ChevronDoodle isOpen={isOpen} />
+                      </Box>
+                      {isOpen && (
+                        <Box className="notes-sidebar-label-list">{group.entries.map((entry) => entry.render())}</Box>
+                      )}
+                    </Box>
+                  )
+                })}
+                {sharedUnlabeledEntries.map((entry) => entry.render())}
               </Box>
-              {isOpen && (
-                <Box className="notes-sidebar-label-list">{group.entries.map((entry) => entry.render())}</Box>
-              )}
-            </Box>
-          )
-        })}
-        {unlabeledEntries.map((entry) => entry.render())}
+            )}
+          </Box>
+        </>
+      )}
+
+      <Box className="notes-sidebar-collapse-row">
+        <IconButton
+          className="notes-sidebar-collapse-btn"
+          aria-label={collapsed ? 'Afficher la liste des notes' : 'Réduire la liste des notes'}
+          onClick={onToggleCollapse}
+        >
+          <RailToggleDoodle collapsed={collapsed} />
+        </IconButton>
       </Box>
 
       <FilterNotesDialog

@@ -27,6 +27,8 @@ interface AuthControlsProps {
   onFontChange: (fontId: string | null) => void
   autoSave: boolean
   onAutoSaveChange: (enabled: boolean) => void
+  contentFontSize: string
+  onContentFontSizeChange: (id: string) => void
 }
 
 export default function AuthControls({
@@ -34,6 +36,8 @@ export default function AuthControls({
   onFontChange,
   autoSave,
   onAutoSaveChange,
+  contentFontSize,
+  onContentFontSizeChange,
 }: AuthControlsProps): JSX.Element {
   const { user, isAuthLoading, signInWithGoogle, signOutUser } = useAuth()
   const { isSyncing, lastSyncedAt, syncError, syncNow } = useNotesSync()
@@ -69,6 +73,8 @@ export default function AuthControls({
           onFontChange={onFontChange}
           autoSave={autoSave}
           onAutoSaveChange={onAutoSaveChange}
+          contentFontSize={contentFontSize}
+          onContentFontSizeChange={onContentFontSizeChange}
         />
         <Button variant="outlined" onClick={handleSignIn}>
           Se connecter avec Google
@@ -104,6 +110,8 @@ export default function AuthControls({
         onFontChange={onFontChange}
         autoSave={autoSave}
         onAutoSaveChange={onAutoSaveChange}
+        contentFontSize={contentFontSize}
+        onContentFontSizeChange={onContentFontSizeChange}
       />
       <IconButton className="auth-controls-avatar-btn" onClick={openMenu} aria-label="Compte">
         <Avatar

@@ -11,6 +11,7 @@ interface UseShareNoteResult {
   publishNote: (note: Note) => Promise<void>
   unpublishNote: (note: Note) => Promise<void>
   updateSharedLabels: (noteId: string, labels: string[]) => Promise<void>
+  backupNote: (note: Note) => Promise<void>
 }
 
 export function useShareNote(): UseShareNoteResult {
@@ -72,5 +73,24 @@ export function useShareNote(): UseShareNoteResult {
     }
   }, [])
 
-  return { isSharing, shareError, publishNote, unpublishNote, updateSharedLabels }
+  const backupNote = useCallback(
+    async (note: Note) => {
+      if (!user || !db) {
+        setShareError('Connecte-toi pour sauvegarder cette note en ligne')
+        return
+      }
+      setIsSharing(true)
+      setShareError(null)
+      try {
+        await setDoc(doc(db, 'users', user.uid, 'notes', note.id), note)
+      } catch {
+        setShareError('Impossible de sauvegarder cette note en ligne')
+      } finally {
+        setIsSharing(false)
+      }
+    },
+    [user],
+  )
+
+  return { isSharing, shareError, publishNote, unpublishNote, updateSharedLabels, backupNote }
 }

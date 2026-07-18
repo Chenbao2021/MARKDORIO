@@ -1,4 +1,4 @@
-import { Box, Button, Dialog, Switch, TextField, Typography } from '@mui/material'
+import { Box, Button, Dialog, Divider, Switch, TextField, Typography } from '@mui/material'
 import { useCallback, useState, type JSX } from 'react'
 import type { Note } from '../data/note'
 import { useAuth } from '../context/AuthContext'
@@ -12,8 +12,9 @@ interface ShareDialogProps {
 
 export default function ShareDialog({ note, onClose }: ShareDialogProps): JSX.Element {
   const { user } = useAuth()
-  const { isSharing, shareError, publishNote, unpublishNote } = useShareNote()
+  const { isSharing, shareError, publishNote, unpublishNote, backupNote } = useShareNote()
   const [copied, setCopied] = useState(false)
+  const [backedUp, setBackedUp] = useState(false)
 
   const shareUrl = note ? `${window.location.origin}/share/${note.id}` : ''
 
@@ -32,6 +33,13 @@ export default function ShareDialog({ note, onClose }: ShareDialogProps): JSX.El
     setCopied(true)
   }, [shareUrl])
 
+  const handleBackup = useCallback(async () => {
+    if (!note) return
+    setBackedUp(false)
+    await backupNote(note)
+    setBackedUp(true)
+  }, [note, backupNote])
+
   return (
     <Dialog
       open={!!note}
@@ -46,9 +54,26 @@ export default function ShareDialog({ note, onClose }: ShareDialogProps): JSX.El
           <Typography className="share-dialog-title">Partager « {note.title || 'Sans titre'} »</Typography>
 
           {!user ? (
-            <Typography className="share-dialog-hint">Connecte-toi pour partager cette note publiquement.</Typography>
+            <Typography className="share-dialog-hint">
+              Connecte-toi pour sauvegarder cette note en ligne ou la partager publiquement.
+            </Typography>
           ) : (
             <>
+              <Box className="share-dialog-toggle-row">
+                <Box>
+                  <Typography className="share-dialog-toggle-label">Sauvegarde privée</Typography>
+                  <Typography className="share-dialog-hint">
+                    Sauvegarde cette note en ligne pour toi uniquement, pour la retrouver et l'éditer depuis un autre
+                    appareil (synchronise-toi là-bas pour la récupérer).
+                  </Typography>
+                </Box>
+                <Button variant="outlined" disabled={isSharing} onClick={() => void handleBackup()}>
+                  {backedUp ? 'Sauvegardé !' : 'Sauvegarder en ligne'}
+                </Button>
+              </Box>
+
+              <Divider />
+
               <Box className="share-dialog-toggle-row">
                 <Box>
                   <Typography className="share-dialog-toggle-label">Partage public</Typography>

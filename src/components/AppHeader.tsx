@@ -9,6 +9,8 @@ interface AppHeaderProps {
   onFontChange: (fontId: string | null) => void
   autoSave: boolean
   onAutoSaveChange: (enabled: boolean) => void
+  contentFontSize: string
+  onContentFontSizeChange: (id: string) => void
 }
 
 const MenuDoodle = (): JSX.Element => (
@@ -25,6 +27,8 @@ export default function AppHeader({
   onFontChange,
   autoSave,
   onAutoSaveChange,
+  contentFontSize,
+  onContentFontSizeChange,
 }: AppHeaderProps): JSX.Element {
   return (
     <AppBar position="static" color="transparent" elevation={0} className="app-header">
@@ -44,6 +48,8 @@ export default function AppHeader({
           onFontChange={onFontChange}
           autoSave={autoSave}
           onAutoSaveChange={onAutoSaveChange}
+          contentFontSize={contentFontSize}
+          onContentFontSizeChange={onContentFontSizeChange}
         />
       </Toolbar>
     </AppBar>

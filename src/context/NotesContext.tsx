@@ -26,6 +26,7 @@ interface NotesContextValue {
   allLabels: string[]
   selectNote: (id: string | null) => void
   createNote: () => string
+  importNote: (data: Pick<Note, 'title' | 'content' | 'labels' | 'fontFamily'>) => Note
   updateNote: (id: string, patch: Partial<Pick<Note, 'title' | 'content' | 'labels' | 'fontFamily' | 'isPublic'>>) => void
   deleteNote: (id: string) => void
   replaceAllNotes: (next: Note[]) => void
@@ -91,6 +92,30 @@ export function NotesProvider({ children }: { children: ReactNode }): JSX.Elemen
     return note.id
   }, [flushSave, setSelectedNoteId])
 
+  const importNote = useCallback(
+    (data: Pick<Note, 'title' | 'content' | 'labels' | 'fontFamily'>): Note => {
+      flushSave()
+      const now = Date.now()
+      const note: Note = {
+        id: crypto.randomUUID(),
+        title: data.title,
+        content: data.content,
+        createdAt: now,
+        updatedAt: now,
+        labels: data.labels,
+        fontFamily: data.fontFamily,
+        isPublic: false,
+      }
+      setNotes((prev) => {
+        const next = [note, ...prev]
+        writeJSON(NOTES_KEY, next)
+        return next
+      })
+      return note
+    },
+    [flushSave],
+  )
+
   const updateNote = useCallback(
     (id: string, patch: Partial<Pick<Note, 'title' | 'content' | 'labels' | 'fontFamily' | 'isPublic'>>) => {
       setNotes((prev) => {
@@ -151,6 +176,7 @@ export function NotesProvider({ children }: { children: ReactNode }): JSX.Elemen
       allLabels,
       selectNote,
       createNote,
+      importNote,
       updateNote,
       deleteNote,
       replaceAllNotes,
@@ -164,6 +190,7 @@ export function NotesProvider({ children }: { children: ReactNode }): JSX.Elemen
       allLabels,
       selectNote,
       createNote,
+      importNote,
       updateNote,
       deleteNote,
       replaceAllNotes,

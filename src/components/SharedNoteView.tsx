@@ -1,10 +1,12 @@
 import { Box, Chip, CircularProgress, Typography } from '@mui/material'
-import { useEffect, useState, type JSX } from 'react'
+import { useEffect, useState, type CSSProperties, type JSX } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import type { SharedNote } from '../data/note'
 import { FONT_MAP } from '../data/fonts'
+import { CONTENT_FONT_SIZE_KEY, FONT_SIZE_MAP, DEFAULT_FONT_SIZE_ID } from '../data/fontSizes'
+import { readJSON } from '../hooks/useLocalStorage'
 import { loadGoogleFont } from '../utils/loadGoogleFont'
 import MarkdownPreview from './MarkdownPreview'
 import './SharedNoteView.less'
@@ -53,6 +55,9 @@ export default function SharedNoteView(): JSX.Element {
   }, [note?.fontFamily])
 
   const activeFontFamily = note?.fontFamily ? (FONT_MAP[note.fontFamily]?.family ?? null) : null
+  const contentFontSizeId = readJSON<string>(CONTENT_FONT_SIZE_KEY, DEFAULT_FONT_SIZE_ID)
+  const contentFontSizePx = (FONT_SIZE_MAP[contentFontSizeId] ?? FONT_SIZE_MAP[DEFAULT_FONT_SIZE_ID]).px
+  const contentFontSizeStyle = { '--content-font-size': `${contentFontSizePx}px` } as CSSProperties
 
   return (
     <Box className="shared-note-view">
@@ -84,7 +89,7 @@ export default function SharedNoteView(): JSX.Element {
       )}
 
       {state === 'ready' && note && (
-        <Box className="shared-note-view-content">
+        <Box className="shared-note-view-content" style={contentFontSizeStyle}>
           <Typography variant="h4" className="shared-note-view-title">
             {note.title || 'Sans titre'}
           </Typography>

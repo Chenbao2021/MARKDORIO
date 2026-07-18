@@ -21,6 +21,14 @@
   background: @bg;
   min-height: 0;
   overflow-y: auto;
+  transition: flex-basis 0.15s ease;
+
+  @media (min-width: 900px) {
+    &.is-collapsed {
+      flex-basis: 52px;
+      overflow: hidden;
+    }
+  }
 
   @media (max-width: 899px) {
     position: fixed;

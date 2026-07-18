@@ -1,10 +1,21 @@
 import { Box, IconButton, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type JSX, type KeyboardEvent, type UIEvent } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type CSSProperties,
+  type JSX,
+  type KeyboardEvent,
+  type UIEvent,
+} from 'react'
 import type { Note } from '../data/note'
 import { useAuth } from '../context/AuthContext'
 import { useNotes } from '../context/NotesContext'
 import { useNotesSync } from '../hooks/useNotesSync'
 import { FONT_MAP } from '../data/fonts'
+import { FONT_SIZE_MAP, DEFAULT_FONT_SIZE_ID } from '../data/fontSizes'
 import { NEW_NOTE_PLACEHOLDER } from '../data/newNoteTemplate'
 import { loadGoogleFont } from '../utils/loadGoogleFont'
 import MarkdownPreview from './MarkdownPreview'
@@ -15,6 +26,7 @@ import './NoteEditor.less'
 interface NoteEditorProps {
   note: Note
   autoSave: boolean
+  contentFontSize: string
 }
 
 const LabelDoodle = (): JSX.Element => (
@@ -35,7 +47,7 @@ const ShareDoodle = (): JSX.Element => (
 
 type MobileView = 'write' | 'preview'
 
-export default function NoteEditor({ note, autoSave }: NoteEditorProps): JSX.Element {
+export default function NoteEditor({ note, autoSave, contentFontSize }: NoteEditorProps): JSX.Element {
   const { updateNote } = useNotes()
   const { user } = useAuth()
   const { syncNow } = useNotesSync()
@@ -116,6 +128,8 @@ export default function NoteEditor({ note, autoSave }: NoteEditorProps): JSX.Ele
   }, [])
 
   const activeFontFamily = note.fontFamily ? (FONT_MAP[note.fontFamily]?.family ?? null) : null
+  const contentFontSizePx = (FONT_SIZE_MAP[contentFontSize] ?? FONT_SIZE_MAP[DEFAULT_FONT_SIZE_ID]).px
+  const contentFontSizeStyle = { '--content-font-size': `${contentFontSizePx}px` } as CSSProperties
 
   return (
     <Box className="note-editor">
@@ -173,7 +187,7 @@ export default function NoteEditor({ note, autoSave }: NoteEditorProps): JSX.Ele
         </IconButton>
       </Box>
 
-      <Box className="note-editor-panes">
+      <Box className="note-editor-panes" style={contentFontSizeStyle}>
         <Box
           className={`note-editor-pane note-editor-pane--write${mobileView === 'write' ? ' is-active-mobile' : ''}`}
         >
